@@ -81,21 +81,29 @@ func contains(s []int, e int) bool {
 }
 
 func restartProcess(firstrun bool) {
-	if runs, err := isProcRunning("FXServer.exe"); runs == true && err == nil && firstrun == false {
-		fmt.Println("Stopping FXServer")
-		//cmd := exec.Command("taskkill.exe", "/F", "/IM", "FXServer.exe")
-		cmd := exec.Command("taskkill.exe", "/IM", "cmd.exe")
-		err = cmd.Start()
-		if err != nil {
-			fmt.Println("Server was not running?!?")
-		}
-		time.Sleep(15 * time.Second)
-	}
-	fmt.Println("Starting FXServer")
 	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
+	if runs, err := isProcRunning("FXServer.exe"); runs == true && err == nil && firstrun == false {
+		fmt.Println("Stopping FXServer")
+		cmd := exec.Command("taskkill.exe", "/F", "/IM", "FXServer.exe")
+		err = cmd.Start()
+		if err != nil {
+			fmt.Println("Server was not running?!?")
+		}
+		err = os.RemoveAll(dir + "\\cache")
+		if err != nil {
+			log.Fatal(err)
+		}
+		time.Sleep(15 * time.Second)
+		cmd = exec.Command("taskkill.exe", "/F", "/IM", "cmd.exe")
+		err = cmd.Start()
+		if err != nil {
+			fmt.Println("Server was not running?!?")
+		}
+	}
+	fmt.Println("Starting FXServer")
 	cmd := exec.Command("cmd", "/C", "start", "cmd.exe", "@cmd", "/k", dir+"\\run.cmd")
 	err = cmd.Start()
 	if err != nil {
