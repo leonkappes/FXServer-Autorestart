@@ -16,6 +16,8 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+var restartInProgress = false
+
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("---------------------")
@@ -57,6 +59,23 @@ func main() {
 			restartProcess(false)
 		}
 	})
+
+	ticker := time.NewTicker(5 * time.Second)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+        	case <- ticker.C:
+        	    if runs, err := isProcRunning("FXServer.exe"); runs == false && err == nil && restartInProgress == false {
+					restartProcess(false)
+				}
+        	case <- quit:
+        	    ticker.Stop()
+        	    return
+        	}
+    	}
+ 	}()
+
 	c.Start()
 
 	fmt.Println("Press r to restart the server")
@@ -87,6 +106,7 @@ func restartProcess(firstrun bool) {
 	}
 	if runs, err := isProcRunning("FXServer.exe"); runs == true && err == nil && firstrun == false {
 		fmt.Println("Stopping FXServer")
+		restartInProgress = true
 		cmd := exec.Command("taskkill.exe", "/F", "/IM", "FXServer.exe")
 		err = cmd.Start()
 		if err != nil {
@@ -108,6 +128,10 @@ func restartProcess(firstrun bool) {
 	err = cmd.Start()
 	if err != nil {
 		log.Fatal(err)
+	}
+	restartInProgress = false
+	if !firstrun {
+		fmt.Print("-> ")
 	}
 }
 
