@@ -51,7 +51,7 @@ func main() {
 	}
 
 	c := cron.New()
-	c.AddFunc("1 * * * *", func() {
+	c.AddFunc("0 * * * *", func() {
 		t := time.Now()
 		h := t.Hour()
 		if contains(times, h) {
